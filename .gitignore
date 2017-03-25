@@ -1,0 +1,5 @@
+.idea/
+*.tsv
+./exercise*/out/
+./exercise1/out/
+*.iml
