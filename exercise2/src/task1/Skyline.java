@@ -105,7 +105,49 @@ public class Skyline {
         return res;
     }
 
-    void test_nestedloop() {
+    public static ArrayList<Tuple> bnlSkyline(ArrayList<Tuple> partition) {
+        ArrayList<Tuple> window = new ArrayList<Tuple>();
+
+        Iterator<Tuple> p_it = partition.iterator();
+        while (p_it.hasNext()) {
+            if (window.isEmpty()) {
+                window.add(p_it.next());
+                p_it.remove();
+                continue;
+            }
+
+            Tuple obj = p_it.next();
+
+            Iterator<Tuple> win_it = window.iterator();
+            boolean win_dominates = false;
+            while (win_it.hasNext()) {
+                Tuple win_obj = win_it.next();
+
+                if(obj.isIncomparable(win_obj)) {
+                    continue;
+                }
+
+                //object dominates -> remove candidate from window of incomparable objects
+                if (obj.dominates(win_obj)) {
+                    win_it.remove();
+                }
+                //object is dominated -> exit inner loop
+                else if (win_obj.dominates(obj)) {
+                    p_it.remove();
+                    win_dominates = true;
+                    break;
+                }
+            }
+
+            if (!win_dominates) {
+                window.add(obj);
+                p_it.remove();
+            }
+        }
+        return window;
+    }
+
+    void test_nl() {
         ArrayList<Tuple> data = new ArrayList<Tuple>();
         data.add(new Tuple(250, 14));
         data.add(new Tuple(600, 15));
@@ -121,8 +163,25 @@ public class Skyline {
         }
     }
 
+    void test_bnl() {
+        ArrayList<Tuple> data = new ArrayList<Tuple>();
+        data.add(new Tuple(250, 14));
+        data.add(new Tuple(600, 15));
+        data.add(new Tuple(2100, 9));
+        data.add(new Tuple(9900, 3));
+        data.add(new Tuple(1000, 9));
+        data.add(new Tuple(9700, 3));
+
+        data = bnlSkyline(data);
+
+        for(Tuple t: data) {
+            System.out.println(String.format("%d, %d", t.getPrice(), t.getAge()));
+        }
+    }
+
     public static void main(String[] args) {
-        (new Skyline()).test_nestedloop();
+        //(new Skyline()).test_nl();
+        (new Skyline()).test_bnl();
 
 
 //        String csvFile = "car.csv"
