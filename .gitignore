@@ -3,3 +3,8 @@
 ./exercise*/out/
 ./exercise1/out/
 *.iml
+exercise1/out/
+exercise1/out*.txt
+*.pdf
+*.csv
+*.class
