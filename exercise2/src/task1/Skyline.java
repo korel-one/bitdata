@@ -28,7 +28,7 @@ public class Skyline {
     private static ArrayList<Tuple> dcSkyline_aux(ArrayList<Tuple> inputList
             , int left, int right, int blockSize) {
 
-        if(right - left <= blockSize) {
+        if((right - left + 1) <= blockSize) {
             return nlSkyline(new ArrayList<Tuple>(inputList.subList(left, right)));
             //return bnlSkyline(new ArrayList<Tuple>(inputList.subList(left, right)));
         }
