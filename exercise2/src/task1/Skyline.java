@@ -3,6 +3,7 @@ package task1;
 import java.io.BufferedReader;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.lang.reflect.Array;
 import java.util.*;
 
 /**
@@ -13,26 +14,69 @@ import java.io.FileReader;
 import java.io.File;
 
 public class Skyline {
-    ArrayList<Tuple> data;
-    Skyline() {
-        data = new ArrayList<Tuple>();
-    }
-
 
     public static ArrayList<Tuple> mergePartitions(ArrayList<ArrayList<Tuple>> partitions){
-        // merges the skyline of different partitions
+        ArrayList<Tuple> list = new ArrayList<Tuple>();
+        for(ArrayList<Tuple> p: partitions) {
+            list.addAll(p);
+        }
 
-
-
-        // TODO
-        return null;
+        return list;
     }
 
+    static ArrayList<ArrayList<Tuple>> skylines;
+    private static ArrayList<Tuple> dcSkyline_aux(ArrayList<Tuple> inputList
+            , int left, int right, int blockSize) {
 
-    public static ArrayList<Tuple> dcSkyline(ArrayList<Tuple> inputList, int blockSize){
+        if(right - left <= blockSize) {
+            return nlSkyline(new ArrayList<Tuple>(inputList.subList(left, right)));
+            //return bnlSkyline(new ArrayList<Tuple>(inputList.subList(left, right)));
+        }
+        else {
+            int N = inputList.size();
+            skylines.add(dcSkyline_aux(inputList, 0, N/2-1, blockSize));
+            skylines.add(dcSkyline_aux(inputList, N/2, N-1, blockSize));
+
+            return mergePartitions(skylines);
+        }
+    }
+
+    public static ArrayList<Tuple> dcSkyline(ArrayList<Tuple> inputList, int blockSize) {
+        skylines = new ArrayList<ArrayList<Tuple>>();
+        ArrayList<Tuple> list = dcSkyline_aux(inputList, 0, inputList.size()-1, blockSize);
+        if(list.size() < inputList.size()) {
+            return dcSkyline(list, blockSize);
+        }
+        else {
+            return list;
+        }
+    }
+
+    public static ArrayList<Tuple> dcSkyline_iter(ArrayList<Tuple> inputList, int blockSize){
         // compute the skyline of a given collection of data
         // partition size - number of elements in a partition
 
+        //1. divide the problem to sub-problems of the same type
+        int N = inputList.size()%blockSize == 0 ? inputList.size()/blockSize : inputList.size()/blockSize + 1;
+
+        ArrayList<ArrayList<Tuple>> blocks = new ArrayList<ArrayList<Tuple>>();
+
+        for(int i = 0; i < N; i+=blockSize ) {
+            int end_index = (i + blockSize) > inputList.size() ?
+                inputList.size() : i + blockSize;
+
+            blocks.add(new ArrayList<Tuple>(inputList.subList(i, end_index)));
+        }
+
+        //2. solve recursively:       compute the skyline of each partition using BNL
+        ArrayList<ArrayList<Tuple>> skylines = new ArrayList<ArrayList<Tuple>>();
+        for(ArrayList<Tuple> partition: blocks) {
+            skylines.add(nlSkyline(partition));
+        }
+
+
+
+        //3. merge partial solutions: compute the union of all partial skylines
 
         // TODO
         return null;
@@ -181,29 +225,33 @@ public class Skyline {
 
     public static void main(String[] args) {
         //(new Skyline()).test_nl();
-        (new Skyline()).test_bnl();
+        //(new Skyline()).test_bnl();
 
 
-//        String csvFile = "car.csv"
-//                , delimiter = "\\|";
-//        Skyline skyline = null;
-//        Scanner scanner = null;
-//
-//        try{
-//            scanner = new Scanner(new File(csvFile));
-//
-//            skyline = new Skyline();
-//            while(scanner.hasNext()) {
-//                String[] dataArray = scanner.nextLine().split(delimiter);
-//                int price = Integer.parseInt(dataArray[0]);
-//                int age = Integer.parseInt(dataArray[1]);
-//
-//                Tuple tuple = new Tuple(price, age);
-//                skyline.data.add(tuple);
-//            }
-//        }
-//        catch (FileNotFoundException e) {e.printStackTrace();}
-//        finally { if(scanner != null) {scanner.close();}}
+        String csvFile = "car.csv"
+                , delimiter = "\\|";
+        Scanner scanner = null;
+
+        ArrayList<Tuple> data = null;
+        try{
+            scanner = new Scanner(new File(csvFile));
+
+            data = new ArrayList<Tuple>();
+            while(scanner.hasNext()) {
+                String[] dataArray = scanner.nextLine().split(delimiter);
+                int price = Integer.parseInt(dataArray[0]);
+                int age = Integer.parseInt(dataArray[1]);
+
+                data.add(new Tuple(price, age));
+            }
+            scanner.close();
+        }
+        catch (FileNotFoundException e) {
+            e.printStackTrace();
+        }
+
+        Skyline skyline = new Skyline();
+        ArrayList<Tuple> res = skyline.dcSkyline(data, 100);
     }
 }
 
