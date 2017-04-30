@@ -1,9 +1,6 @@
 package task1;
 
-import java.io.BufferedReader;
 import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.lang.reflect.Array;
 import java.util.*;
 
 /**
@@ -12,26 +9,28 @@ import java.util.*;
 
 import java.io.File;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 public class Skyline {
 
-    private ArrayList<ArrayList<Tuple>> skylines = new ArrayList<ArrayList<Tuple>>();
-
     ArrayList<Tuple> mergePartitions(ArrayList<ArrayList<Tuple>> partitions) {
-        ArrayList<Tuple> list = partitions.stream()
-                .flatMap(ArrayList<Tuple>::stream)
-                .collect(Collectors.toCollection(ArrayList<Tuple>::new));
 
-        // clear partitions container after merging
-        partitions.clear();
+        if(partitions.size() == 1) {
+            return nlSkyline(partitions.get(0));
+        }
 
-        Collections.sort(list, (t1, t2)-> {
+        int N = partitions.size();
+
+        ArrayList<Tuple> left = mergePartitions(new ArrayList<ArrayList<Tuple>>(partitions.subList(0, N/2)));
+        ArrayList<Tuple> right = mergePartitions(new ArrayList<ArrayList<Tuple>>(partitions.subList(N/2, N)));
+
+        left.addAll(right);
+        Collections.sort(left, (t1, t2)-> {
             int p1 = t1.getPrice();
             int p2 = t2.getPrice();
             return (p1 - p2 != 0) ? p1 - p2 : t1.getAge() - t1.getAge();
         });
-
-        return list;
+        return nlSkyline(left);
     }
 
     ArrayList<Tuple> dcSkyline(ArrayList<Tuple> inputList, int partitionSize) {
@@ -45,16 +44,14 @@ public class Skyline {
     }
 
     private ArrayList<Tuple> dcSkylineAux(ArrayList<Tuple> inputList, int blockSize) {
-
-        if(inputList.size() <= blockSize) {
-            return nlSkyline(inputList);
-        }
-
         int N = inputList.size();
-        skylines.add(dcSkylineAux(new ArrayList<Tuple>(inputList.subList(0, (N / 2) + 1)), blockSize));
-        skylines.add(dcSkylineAux(new ArrayList<Tuple>(inputList.subList(N/2+1, N)), blockSize));
+        ArrayList<ArrayList<Tuple>> partitions = IntStream.range(0, (N - 1)/blockSize + 1)
+                        .mapToObj( i -> new ArrayList<Tuple>(inputList.subList(i *= blockSize
+                                    , (N - blockSize >= i) ? i + blockSize : N)))
+                        .collect(Collectors.toCollection(ArrayList::new));
 
-        return mergePartitions(skylines);
+
+        return mergePartitions(partitions);
     }
 
     ArrayList<Tuple> nlSkyline(ArrayList<Tuple> partition) {
@@ -120,14 +117,12 @@ public class Skyline {
 
         try {
             Skyline skyline = new Skyline();
-            ArrayList<Tuple> res1 = skyline.dcSkyline(data, 100);
+            ArrayList<Tuple> res1 = skyline.dcSkyline(data, 1000);
 
-            ArrayList<Tuple> res2 = skyline.dcSkyline(data, 100);
-
-            ArrayList<Tuple> res3 = skyline.bnlSkyline(data, 0, data.size()-1);
-            Collections.sort(res3, (t1, t2)->{int p1 = t1.getPrice();
-                int p2 = t2.getPrice();
-                return (p1 - p2 != 0) ? p1 - p2 : t1.getAge() - t1.getAge();});
+            ArrayList<Tuple> res2 = skyline.nlSkyline(data);
+            //ArrayList<Tuple> res2 = skyline.dcSkyline(data, 100);
+            //ArrayList<Tuple> res3 = skyline.dcSkyline(null, 100);
+            //ArrayList<Tuple> res4 = skyline.dcSkyline(new ArrayList<Tuple>(), 100);
 
             System.out.println();
         }
